@@ -7,23 +7,55 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+
 const users = [];
 
 function checksExistsUserAccount(request, response, next) {
-  // Complete aqui
+  const { username } = request.headers
+  const user = users.find(user=>user.username === username)
+  if(!user)
+    return response.status(404).json({
+      error: 'Usuário não encontrado'
+    })
+  request.user = user;
+  next()
 }
 
 function checksCreateTodosUserAvailability(request, response, next) {
-  // Complete aqui
+  const user = request.user;
+  if(user.pro)
+    next()
+  if(user.todos.length >= 10)
+    return response.status(403).json({
+      error: 'Limite máximo de to-dos atingido.'
+    })
+  next()
 }
 
 function checksTodoExists(request, response, next) {
-  // Complete aqui
+  const { username } = request.headers;
+  const { id: todoId } = request.params;
+  if(!validate(todoId))
+    return response.status(400).json({error: "Id inválido"})
+  const user = users.find(user=>user.username === username);
+  if(!user)
+    return response.status(404).json({error: "Usuario não encontrado"})
+  const todo = user.todos.find(todo=>todo.id === todoId)
+  if(!todo)
+    return response.status(404).json({error: "To-do não encontrado"})
+  request.user = user;
+  request.todo = todo;
+  next()
 }
 
 function findUserById(request, response, next) {
-  // Complete aqui
-}
+  const { id: userId } = request.params;
+  const user = users.find(user=>user.id === userId);
+  if(!user)
+    return response.status(404).json({error: "Usuário não encontrado"})
+  request.user = user;
+  next()
+} 
 
 app.post('/users', (request, response) => {
   const { name, username } = request.body;
